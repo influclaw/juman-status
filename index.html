@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estado de los servidores · juman.ch</title>
+<meta name="description" content="Estado en tiempo real de los servidores de Jellyfin y Plex.">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📺</text></svg>">
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --line:#242934;
+    --txt:#e7e9ee; --dim:#9aa3b2;
+    --up:#2ecc71; --down:#e74c3c; --warn:#f39c12;
+  }
+  @media (prefers-color-scheme:light){
+    :root{--bg:#f6f7f9;--card:#fff;--line:#e3e6ea;--txt:#1a1d23;--dim:#5f6775}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:24px 16px 48px}
+  .wrap{max-width:760px;margin:0 auto}
+  h1{font-size:1.5rem;margin:0 0 4px}
+  .sub{color:var(--dim);font-size:.9rem;margin-bottom:24px}
+  .banner{border-radius:12px;padding:14px 16px;margin-bottom:20px;font-weight:600;
+    display:flex;align-items:center;gap:10px}
+  .banner.ok{background:rgba(46,204,113,.12);color:var(--up);border:1px solid rgba(46,204,113,.3)}
+  .banner.bad{background:rgba(231,76,60,.12);color:var(--down);border:1px solid rgba(231,76,60,.3)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:18px;margin-bottom:14px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .name{font-weight:600;font-size:1.1rem;display:flex;align-items:center;gap:9px}
+  .dot{width:11px;height:11px;border-radius:50%;flex:none}
+  .dot.up{background:var(--up);box-shadow:0 0 0 4px rgba(46,204,113,.18)}
+  .dot.down{background:var(--down);box-shadow:0 0 0 4px rgba(231,76,60,.18)}
+  .pill{font-size:.78rem;font-weight:700;padding:4px 10px;border-radius:999px;letter-spacing:.3px}
+  .pill.up{background:rgba(46,204,113,.15);color:var(--up)}
+  .pill.down{background:rgba(231,76,60,.15);color:var(--down)}
+  .meta{color:var(--dim);font-size:.87rem;margin-top:10px}
+  .meta b{color:var(--txt);font-weight:600}
+  .bars{display:flex;gap:2px;margin-top:14px;height:30px;align-items:flex-end}
+  .bars i{flex:1;border-radius:2px;min-width:2px;background:var(--up);height:100%}
+  .bars i.d{background:var(--down)}
+  .bars i.n{background:var(--line)}
+  .legend{display:flex;justify-content:space-between;color:var(--dim);
+    font-size:.75rem;margin-top:5px}
+  a.btn{display:inline-block;margin-top:14px;color:var(--txt);text-decoration:none;
+    border:1px solid var(--line);padding:7px 13px;border-radius:8px;font-size:.88rem}
+  a.btn:hover{border-color:var(--dim)}
+  h2{font-size:1rem;margin:26px 0 10px}
+  .inc{font-size:.88rem;padding:9px 0;border-bottom:1px solid var(--line);color:var(--dim)}
+  .inc:last-child{border:0}
+  .inc b{color:var(--txt)}
+  footer{color:var(--dim);font-size:.8rem;margin-top:28px;text-align:center;line-height:1.7}
+  .skel{color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Estado de los servidores</h1>
+  <div class="sub" id="updated">Cargando…</div>
+
+  <div id="banner" class="banner ok" hidden></div>
+  <div id="cards"><p class="skel">Consultando el estado…</p></div>
+
+  <h2>Incidencias recientes</h2>
+  <div id="incidents"><p class="skel">—</p></div>
+
+  <footer>
+    Se comprueba automáticamente cada 5 minutos.<br>
+    Esta página es estática: no accede a los servidores desde tu navegador.
+  </footer>
+</div>
+
+<script>
+const FMT = new Intl.DateTimeFormat('es-ES',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+
+function ago(iso){
+  const s = Math.max(0,(Date.now()-new Date(iso).getTime())/1000);
+  const d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60);
+  if(d>0) return `${d} día${d>1?'s':''} ${h} h`;
+  if(h>0) return `${h} h ${m} min`;
+  if(m>0) return `${m} min`;
+  return 'menos de 1 min';
+}
+function dur(sec){
+  if(sec==null) return '';
+  const h=Math.floor(sec/3600), m=Math.floor(sec%3600/60);
+  if(h>0) return `${h} h ${m} min`;
+  if(m>0) return `${m} min`;
+  return `${sec} s`;
+}
+
+fetch('data/status.json?t='+Date.now())
+  .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(render)
+  .catch(e=>{
+    document.getElementById('cards').innerHTML =
+      '<div class="card">No se ha podido cargar el estado. Vuelve a intentarlo en unos minutos.</div>';
+    document.getElementById('updated').textContent = 'Error: '+e.message;
+  });
+
+function render(d){
+  const svcs = Object.values(d.services||{});
+  document.getElementById('updated').textContent =
+    'Última comprobación: '+FMT.format(new Date(d.updated))+' ('+ago(d.updated)+')';
+
+  const down = svcs.filter(s=>!s.up);
+  const b = document.getElementById('banner');
+  b.hidden = false;
+  if(down.length===0){
+    b.className='banner ok';
+    b.textContent='✅ Todo funciona correctamente';
+  }else{
+    b.className='banner bad';
+    b.textContent='⚠️ '+down.map(s=>s.name).join(' y ')+(down.length>1?' no están':' no está')+' disponible'+(down.length>1?'s':'');
+  }
+
+  document.getElementById('cards').innerHTML = svcs.map(s=>{
+    const h=(s.history||[]).slice(-60);
+    const bars = h.length
+      ? h.map(x=>`<i class="${x.u?'':'d'}" title="${FMT.format(new Date(x.t))}"></i>`).join('')
+      : '<i class="n"></i>';
+    return `<div class="card">
+      <div class="row">
+        <div class="name"><span class="dot ${s.up?'up':'down'}"></span>${s.name}</div>
+        <span class="pill ${s.up?'up':'down'}">${s.up?'EN MARCHA':'CAÍDO'}</span>
+      </div>
+      <div class="meta">
+        ${s.up
+          ? `Funcionando desde hace <b>${ago(s.since)}</b>`
+          : `Caído desde hace <b>${ago(s.since)}</b> (${FMT.format(new Date(s.since))})`}
+        ${s.up && s.ms!=null ? ` · responde en <b>${s.ms} ms</b>`:''}
+        ${!s.up && s.error ? ` · <b>${s.error}</b>`:''}
+        ${s.uptime_pct!=null ? `<br>Disponibilidad registrada: <b>${s.uptime_pct}%</b> (${(s.history||[]).length} comprobaciones)`:''}
+      </div>
+      <div class="bars">${bars}</div>
+      <div class="legend"><span>más antiguo</span><span>ahora</span></div>
+      <a class="btn" href="${s.url}" target="_blank" rel="noopener">Abrir ${s.name} →</a>
+    </div>`;
+  }).join('');
+
+  const all=[];
+  svcs.forEach(s=>(s.incidents||[]).forEach(i=>all.push({...i,name:s.name})));
+  all.sort((a,b)=>new Date(b.start)-new Date(a.start));
+  const el=document.getElementById('incidents');
+  el.innerHTML = all.length
+    ? all.slice(0,10).map(i=>`<div class="inc">
+        <b>${i.name}</b> — caída el ${FMT.format(new Date(i.start))}
+        ${i.end ? `, recuperado tras <b>${dur(i.seconds)}</b>` : ', <b>sigue caído</b>'}
+        ${i.error?` · ${i.error}`:''}
+      </div>`).join('')
+    : '<p class="skel">Sin incidencias registradas.</p>';
+}
+</script>
+</body>
+</html>

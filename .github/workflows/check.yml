@@ -1,0 +1,70 @@
+name: Comprobar estado
+
+on:
+  schedule:
+    # cada 5 minutos (GitHub puede retrasarlo si hay cola)
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/check.py'
+      - '.github/workflows/check.yml'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: status-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+
+      - name: Comprobar servicios
+        run: python3 scripts/check.py
+
+      - name: Guardar resultado
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add data/status.json
+          if git diff --staged --quiet; then
+            echo "Sin cambios"
+          else
+            git commit -m "estado: $(date -u '+%Y-%m-%d %H:%M UTC')"
+            # la rama puede haber avanzado mientras corria el check
+            for i in 1 2 3; do
+              git pull --rebase --autostash -q origin main && git push -q origin main && break
+              echo "reintento $i"; sleep 5
+            done
+          fi
+
+  deploy:
+    needs: check
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: main
+          fetch-depth: 1
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: '.'
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
