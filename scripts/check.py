@@ -68,6 +68,11 @@ BLOCK_LIST_URL = "https://hayahora.futbol/estado/blocked-{isp}.txt"
 # Rangos espanoles reales (Telefonica / Orange). Se usan solo como "desde
 # donde pregunto" en el DNS, para que Cloudflare devuelva las IPs de Espana.
 ES_SUBNETS = ["88.0.0.0/24", "217.127.0.0/24", "83.36.0.0/24"]
+# IPs anycast de Cloudflare a las que resuelven estos dominios DESDE ESPANA,
+# medidas el 2026-10-10 desde una linea espanola. Van fijas porque desde
+# GitHub Actions es imposible obtenerlas (ver resolve_ips).
+ES_PINNED_IPS = ["188.114.96.2", "188.114.96.5",
+                 "188.114.97.2", "188.114.97.5"]
 ISP_NAMES = {
     "movistar": "Movistar",
     "vodafone": "Vodafone",
@@ -116,16 +121,21 @@ def probe(svc: dict) -> dict:
 def resolve_ips(host: str) -> list[str]:
     """IPs v4 del dominio **tal y como se ven desde Espana**.
 
-    Cloudflare hace geo-DNS: desde GitHub Actions (EEUU) el dominio resuelve a
-    104.21.x / 172.67.x, mientras que desde Espana resuelve a 188.114.96.5 y
-    188.114.97.5 — que son justo las IPs que bloquean los operadores. Resolver
-    en local daria un falso "no hay bloqueo" siempre.
+    Cloudflare no reparte por geo-DNS sino por *anycast*: la respuesta depende
+    de a que POP llega la consulta, no de quien pregunta. Por eso:
+      - desde GitHub Actions (EEUU) el dominio resuelve a 104.21.x / 172.67.x,
+      - desde Espana resuelve a 188.114.96.x / 188.114.97.x,
+    y esas ultimas son justo las que bloquean los operadores. Tampoco sirve
+    DNS-over-HTTPS con EDNS Client Subnet: Cloudflare lo ignora para esto
+    (probado: desde Actions sigue devolviendo las IPs de EEUU).
 
-    Por eso preguntamos via DNS-over-HTTPS con EDNS Client Subnet apuntando a
-    un rango espanol, y asi obtenemos las IPs que vera un usuario de aqui.
-    Si eso falla, caemos al DNS del sistema.
+    Solucion: unir lo que resolvamos dinamicamente con el rango espanol ya
+    medido desde Espana (ES_PINNED_IPS). Si el dominio se moviera de IPs
+    habria que re-medirlas, pero son las anycast de Cloudflare para Espana y
+    cambian muy rara vez.
     """
-    ips: set[str] = set()
+    ips: set[str] = set(ES_PINNED_IPS)
+
     for subnet in ES_SUBNETS:
         try:
             url = (f"https://dns.google/resolve?name={host}&type=A"
@@ -137,16 +147,15 @@ def resolve_ips(host: str) -> list[str]:
             got = {a["data"] for a in data.get("Answer", []) if a.get("type") == 1}
             if got:
                 ips.update(got)
-                break               # una subred basta; son equivalentes
+                break
         except Exception:
             continue
 
-    if not ips:                      # respaldo: DNS del sistema
-        try:
-            infos = socket.getaddrinfo(host, 443, socket.AF_INET, socket.SOCK_STREAM)
-            ips.update(str(i[4][0]) for i in infos)
-        except Exception:
-            pass
+    try:                              # y lo que vea el propio runner
+        infos = socket.getaddrinfo(host, 443, socket.AF_INET, socket.SOCK_STREAM)
+        ips.update(str(i[4][0]) for i in infos)
+    except Exception:
+        pass
     return sorted(ips)
 
 
