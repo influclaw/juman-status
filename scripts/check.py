@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import socket
 import ssl
 import time
 import urllib.error
@@ -50,6 +51,27 @@ RETRY_WAIT = 4
 HISTORY_MAX = 2016    # ~7 dias a 5 min por check
 INCIDENTS_MAX = 50
 UA = "juman-status-page/1.0 (+https://github.com/)"
+
+# --- Bloqueo de IPs por el futbol (LaLiga) -------------------------------
+# Los dominios de juman.ch van por Cloudflare y resuelven a IPs compartidas
+# (188.114.96.5 / 188.114.97.5). Durante los partidos, varios operadores
+# espanoles bloquean esas IPs por orden judicial, asi que el servidor sigue
+# PERFECTAMENTE EN MARCHA pero los usuarios de esos operadores no llegan.
+#
+# Sin este aviso la pagina resulta enganosa: dice "todo bien" (y es verdad,
+# se comprueba desde GitHub, fuera de Espana) mientras el usuario no entra.
+#
+# hayahora.futbol publica las IPs bloqueadas por operador. Lo leemos desde
+# aqui porque no envia cabeceras CORS: el navegador no podria consultarlo.
+BLOCK_ISPS = ["movistar", "vodafone", "orange", "masmovil", "digi"]
+BLOCK_LIST_URL = "https://hayahora.futbol/estado/blocked-{isp}.txt"
+ISP_NAMES = {
+    "movistar": "Movistar",
+    "vodafone": "Vodafone",
+    "orange": "Orange",
+    "masmovil": "MasMovil / Yoigo",
+    "digi": "DIGI",
+}
 
 
 def now_iso() -> str:
@@ -88,6 +110,65 @@ def probe(svc: dict) -> dict:
     return {"up": False, "code": code, "ms": None, "error": last_err}
 
 
+def resolve_ips(host: str) -> list[str]:
+    """IPs v4 a las que resuelve el dominio ahora mismo."""
+    try:
+        infos = socket.getaddrinfo(host, 443, socket.AF_INET, socket.SOCK_STREAM)
+        return sorted({str(i[4][0]) for i in infos})
+    except Exception:
+        return []
+
+
+def fetch_blocklist(isp: str) -> set[str] | None:
+    """IPs bloqueadas por un operador. None si no se pudo consultar."""
+    try:
+        req = urllib.request.Request(
+            BLOCK_LIST_URL.format(isp=isp),
+            headers={"User-Agent": UA, "Accept": "text/plain"},
+        )
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            body = r.read().decode("utf-8", "replace")
+        return {ln.strip() for ln in body.splitlines() if ln.strip()}
+    except Exception:
+        return None
+
+
+def check_blocking(hosts: list[str]) -> dict:
+    """Cruza las IPs de nuestros dominios con las listas de bloqueo.
+
+    Devuelve que operadores tienen bloqueada alguna de nuestras IPs, para
+    poder avisar: "el servidor va, pero desde Vodafone no se llega".
+    """
+    ips: set[str] = set()
+    per_host = {}
+    for h in hosts:
+        got = resolve_ips(h)
+        per_host[h] = got
+        ips.update(got)
+
+    blocked_by = []
+    checked = 0
+    for isp in BLOCK_ISPS:
+        lst = fetch_blocklist(isp)
+        if lst is None:
+            continue
+        checked += 1
+        hit = sorted(ips & lst)
+        if hit:
+            blocked_by.append({"isp": isp, "name": ISP_NAMES.get(isp, isp),
+                               "ips": hit})
+
+    return {
+        "checked_at": now_iso(),
+        "ok": checked > 0,                 # False = no se pudo consultar
+        "isps_checked": checked,
+        "our_ips": sorted(ips),
+        "dns": per_host,
+        "blocked_by": blocked_by,
+        "source": "https://hayahora.futbol",
+    }
+
+
 def load() -> dict:
     try:
         return json.loads(DATA.read_text())
@@ -100,6 +181,46 @@ def main() -> int:
     prev_svcs = prev.get("services", {})
     ts = now_iso()
     out = {"updated": ts, "services": {}}
+
+    # Bloqueo por futbol: mismo instante que el resto del chequeo
+    hosts = sorted({s["url"].split("//", 1)[1].split("/", 1)[0] for s in SERVICES})
+    blk = check_blocking(hosts)
+
+    # historial de bloqueos: guardamos los periodos, no un punto por check
+    prev_blk = prev.get("blocking") or {}
+    episodes = list(prev_blk.get("episodes") or [])
+    was_blocked = bool((prev_blk.get("blocked_by") or []))
+    now_blocked = bool(blk["blocked_by"])
+    if blk["ok"]:
+        if now_blocked and not was_blocked:
+            episodes.append({"start": ts, "end": None,
+                             "isps": [b["name"] for b in blk["blocked_by"]]})
+        elif was_blocked and not now_blocked:
+            for ep in reversed(episodes):
+                if ep.get("end") is None:
+                    ep["end"] = ts
+                    try:
+                        a = datetime.fromisoformat(ep["start"])
+                        ep["seconds"] = int((datetime.fromisoformat(ts) - a)
+                                            .total_seconds())
+                    except Exception:
+                        pass
+                    break
+        elif now_blocked and episodes and episodes[-1].get("end") is None:
+            # sigue bloqueado: refresca la lista de operadores afectados
+            names = {b["name"] for b in blk["blocked_by"]}
+            episodes[-1]["isps"] = sorted(names | set(episodes[-1].get("isps") or []))
+        blk["since"] = (episodes[-1]["start"]
+                        if now_blocked and episodes else None)
+    else:
+        # no se pudo consultar: conserva lo anterior en vez de mentir
+        blk["blocked_by"] = prev_blk.get("blocked_by") or []
+        blk["since"] = prev_blk.get("since")
+
+    blk["episodes"] = episodes[-INCIDENTS_MAX:]
+    out["blocking"] = blk
+    print(f"Bloqueo futbol: {'SI -> ' + ', '.join(b['name'] for b in blk['blocked_by']) if blk['blocked_by'] else 'no'}"
+          f" (IPs {', '.join(blk['our_ips']) or '?'}, {blk['isps_checked']} operadores consultados)")
 
     for svc in SERVICES:
         res = probe(svc)

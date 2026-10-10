@@ -9,9 +9,29 @@ y desde cuándo llevan caídos si ha habido un problema.
 
 - Estado actual de cada servicio: en marcha o caído
 - **Desde cuándo** lleva en ese estado ("caído desde hace 2 h 15 min")
+- **Si está bloqueado por el fútbol** y en qué operadores (ver más abajo)
 - Tiempo de respuesta y porcentaje de disponibilidad registrado
 - Barra con el histórico de las últimas comprobaciones
 - Lista de incidencias recientes con su duración
+
+## Bloqueo de IPs por el fútbol
+
+Los dominios de `juman.ch` van por **Cloudflare** y resuelven a direcciones IP
+compartidas (`188.114.96.5`, `188.114.97.5`). Durante las retransmisiones de
+LaLiga, varios operadores españoles bloquean esas IPs por orden judicial.
+
+El efecto es engañoso: **el servidor funciona perfectamente** —y esta página lo
+confirma, porque comprueba desde GitHub, fuera de España— pero un usuario de
+Vodafone o DIGI no puede entrar y cree que se ha caído.
+
+Por eso la página avisa explícitamente cuando ocurre, dice **qué operadores**
+están afectados y cuáles no, y ofrece soluciones (datos móviles de otro
+operador, VPN, o esperar a que acabe el partido).
+
+Las listas de IPs bloqueadas se leen de
+[hayahora.futbol](https://hayahora.futbol), que las publica por operador.
+Se consultan desde el workflow y no desde el navegador porque ese sitio
+**no envía cabeceras CORS**.
 
 ## Cómo funciona
 
