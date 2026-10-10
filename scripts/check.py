@@ -65,6 +65,9 @@ UA = "juman-status-page/1.0 (+https://github.com/)"
 # aqui porque no envia cabeceras CORS: el navegador no podria consultarlo.
 BLOCK_ISPS = ["movistar", "vodafone", "orange", "masmovil", "digi"]
 BLOCK_LIST_URL = "https://hayahora.futbol/estado/blocked-{isp}.txt"
+# Rangos espanoles reales (Telefonica / Orange). Se usan solo como "desde
+# donde pregunto" en el DNS, para que Cloudflare devuelva las IPs de Espana.
+ES_SUBNETS = ["88.0.0.0/24", "217.127.0.0/24", "83.36.0.0/24"]
 ISP_NAMES = {
     "movistar": "Movistar",
     "vodafone": "Vodafone",
@@ -111,12 +114,40 @@ def probe(svc: dict) -> dict:
 
 
 def resolve_ips(host: str) -> list[str]:
-    """IPs v4 a las que resuelve el dominio ahora mismo."""
-    try:
-        infos = socket.getaddrinfo(host, 443, socket.AF_INET, socket.SOCK_STREAM)
-        return sorted({str(i[4][0]) for i in infos})
-    except Exception:
-        return []
+    """IPs v4 del dominio **tal y como se ven desde Espana**.
+
+    Cloudflare hace geo-DNS: desde GitHub Actions (EEUU) el dominio resuelve a
+    104.21.x / 172.67.x, mientras que desde Espana resuelve a 188.114.96.5 y
+    188.114.97.5 — que son justo las IPs que bloquean los operadores. Resolver
+    en local daria un falso "no hay bloqueo" siempre.
+
+    Por eso preguntamos via DNS-over-HTTPS con EDNS Client Subnet apuntando a
+    un rango espanol, y asi obtenemos las IPs que vera un usuario de aqui.
+    Si eso falla, caemos al DNS del sistema.
+    """
+    ips: set[str] = set()
+    for subnet in ES_SUBNETS:
+        try:
+            url = (f"https://dns.google/resolve?name={host}&type=A"
+                   f"&edns_client_subnet={subnet}")
+            req = urllib.request.Request(
+                url, headers={"User-Agent": UA, "Accept": "application/dns-json"})
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+                data = json.loads(r.read().decode())
+            got = {a["data"] for a in data.get("Answer", []) if a.get("type") == 1}
+            if got:
+                ips.update(got)
+                break               # una subred basta; son equivalentes
+        except Exception:
+            continue
+
+    if not ips:                      # respaldo: DNS del sistema
+        try:
+            infos = socket.getaddrinfo(host, 443, socket.AF_INET, socket.SOCK_STREAM)
+            ips.update(str(i[4][0]) for i in infos)
+        except Exception:
+            pass
+    return sorted(ips)
 
 
 def fetch_blocklist(isp: str) -> set[str] | None:
