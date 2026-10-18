@@ -1,17 +1,17 @@
 {
- "updated": "2026-10-18T21:52:54+00:00",
+ "updated": "2026-10-18T23:48:49+00:00",
  "services": {
   "jellyfin": {
    "name": "Jellyfin",
    "url": "https://ver.juman.ch/",
    "up": true,
    "code": 200,
-   "ms": 789,
+   "ms": 625,
    "error": null,
    "since": "2026-10-05T14:41:56+00:00",
-   "checks": 58,
+   "checks": 59,
    "uptime_pct": 100.0,
-   "avg_ms": 710,
+   "avg_ms": 709,
    "history": [
     {
      "t": "2026-10-05T14:41:56+00:00",
@@ -302,6 +302,11 @@
      "t": "2026-10-18T21:52:54+00:00",
      "u": 1,
      "ms": 789
+    },
+    {
+     "t": "2026-10-18T23:48:49+00:00",
+     "u": 1,
+     "ms": 625
     }
    ],
    "incidents": []
@@ -311,12 +316,12 @@
    "url": "https://plex.juman.ch/",
    "up": true,
    "code": 200,
-   "ms": 656,
+   "ms": 518,
    "error": null,
    "since": "2026-10-05T14:41:56+00:00",
-   "checks": 58,
+   "checks": 59,
    "uptime_pct": 100.0,
-   "avg_ms": 740,
+   "avg_ms": 736,
    "history": [
     {
      "t": "2026-10-05T14:41:56+00:00",
@@ -607,13 +612,18 @@
      "t": "2026-10-18T21:52:54+00:00",
      "u": 1,
      "ms": 656
+    },
+    {
+     "t": "2026-10-18T23:48:49+00:00",
+     "u": 1,
+     "ms": 518
     }
    ],
    "incidents": []
   }
  },
  "blocking": {
-  "checked_at": "2026-10-18T21:52:57+00:00",
+  "checked_at": "2026-10-18T23:48:52+00:00",
   "ok": true,
   "isps_checked": 5,
   "our_ips": [
@@ -642,20 +652,9 @@
     "188.114.97.5"
    ]
   },
-  "blocked_by": [
-   {
-    "isp": "digi",
-    "name": "DIGI",
-    "ips": [
-     "188.114.96.2",
-     "188.114.96.5",
-     "188.114.97.2",
-     "188.114.97.5"
-    ]
-   }
-  ],
+  "blocked_by": [],
   "source": "https://hayahora.futbol",
-  "since": "2026-10-18T17:35:20+00:00",
+  "since": null,
   "episodes": [
    {
     "start": "2026-10-10T21:46:12+00:00",
@@ -692,14 +691,15 @@
    },
    {
     "start": "2026-10-18T17:35:20+00:00",
-    "end": null,
+    "end": "2026-10-18T23:48:49+00:00",
     "isps": [
      "DIGI",
      "MasMovil / Yoigo",
      "Movistar",
      "Orange",
      "Vodafone"
-    ]
+    ],
+    "seconds": 22409
    }
   ]
  }
