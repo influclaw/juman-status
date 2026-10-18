@@ -38,6 +38,8 @@
   .blk .isp.free{background:rgba(46,204,113,.13);color:var(--up)}
   .blk details{margin-top:8px}
   .blk summary{cursor:pointer;font-size:.85rem;color:var(--dim)}
+  .blk .plexnote p{margin:8px 0 0;font-size:.86rem;line-height:1.5;color:var(--dim)}
+  .blk .plexnote p.muted{opacity:.75;font-size:.8rem}
   .blk ul{margin:9px 0 0;padding-left:20px;font-size:.86rem;color:var(--dim)}
   .blk li{margin-bottom:5px}
   .blk a{color:inherit}
@@ -154,6 +156,27 @@ function renderBlocking(blk){
             es por IP, así que saliendo por otra red se evita.</li>
         <li><b>Espera a que acabe el partido.</b> Los bloqueos se levantan al terminar la retransmisión.</li>
       </ul>
+    </details>
+    <details class="plexnote">
+      <summary>🎬 Plex puede seguir funcionando (con peor calidad)</summary>
+      <p>
+        Plex tiene una salida de emergencia llamada <b>Relay</b>: si la app no logra
+        conectar directamente con el servidor, el vídeo se envía a través de los
+        servidores de Plex, que no están afectados por este bloqueo. Suele activarse
+        solo, sin tocar nada.
+      </p>
+      <p>
+        <b>Pero el Relay va limitado a 2 Mbps</b>, así que no esperes la calidad
+        normal: el servidor reescala el vídeo para caber en ese ancho, y en la
+        práctica se queda en algo parecido a un 720p flojo. Sirve para seguir viendo
+        la película; no para 4K ni para audio en alta calidad. Las <b>descargas</b>
+        no funcionan por Relay.
+      </p>
+      <p class="muted">
+        Si la app dice <i>"Indirecto"</i> en la información de reproducción, estás
+        pasando por el Relay. Jellyfin no tiene nada equivalente: si su IP está
+        bloqueada, no hay vía alternativa.
+      </p>
     </details>
     <details>
       <summary>Detalles técnicos</summary>
