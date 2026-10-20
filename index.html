@@ -40,6 +40,9 @@
   .blk summary{cursor:pointer;font-size:.85rem;color:var(--dim)}
   .blk .plexnote p{margin:8px 0 0;font-size:.86rem;line-height:1.5;color:var(--dim)}
   .blk .plexnote p.muted{opacity:.75;font-size:.8rem}
+  .blk .explain p{margin:8px 0 0;font-size:.86rem;line-height:1.5;color:var(--dim)}
+  .blk .explain p.muted{opacity:.75;font-size:.8rem}
+  .blk .explain a{color:var(--warn);font-weight:600}
   .blk ul{margin:9px 0 0;padding-left:20px;font-size:.86rem;color:var(--dim)}
   .blk li{margin-bottom:5px}
   .blk a{color:inherit}
@@ -87,7 +90,8 @@
   <footer>
     Se comprueba automáticamente cada 5 minutos.<br>
     Esta página es estática: no accede a los servidores desde tu navegador.<br>
-    Bloqueos por el fútbol según <a href="https://hayahora.futbol" target="_blank" rel="noopener">hayahora.futbol</a>.
+    Bloqueos por el fútbol según <a href="https://hayahora.futbol" target="_blank" rel="noopener">hayahora.futbol</a>.<br>
+    ¿Qué es el <i>laligagate</i>? <a href="https://youtu.be/L26iBulYrHI" target="_blank" rel="noopener">Vídeo explicativo de Stark Privacy</a>.
   </footer>
 </div>
 
@@ -176,6 +180,27 @@ function renderBlocking(blk){
         Si la app dice <i>"Indirecto"</i> en la información de reproducción, estás
         pasando por el Relay. Jellyfin no tiene nada equivalente: si su IP está
         bloqueada, no hay vía alternativa.
+      </p>
+    </details>
+    <details class="explain">
+      <summary>🧠 ¿Por qué pasa esto? (explicado en 1 vídeo)</summary>
+      <p>
+        LaLiga tiene permiso judicial para bloquear direcciones IP durante los partidos
+        para combatir las retransmisiones piratas. El problema es <b>cómo</b> lo hace:
+        bloquea <b>direcciones IP completas</b> de Cloudflare, y en esas mismas
+        direcciones viven miles de webs y servicios que no tienen nada que ver con el
+        fútbol. Este servidor es uno de ellos: <b>no se bloquea por lo que hace, sino
+        por el vecindario en el que vive</b>.
+      </p>
+      <p>
+        <a href="https://youtu.be/L26iBulYrHI" target="_blank" rel="noopener">
+          ▶️ <b>LaLiga está bloqueando Internet: así puedes evitarlo</b></a>
+        — Stark Privacy. Explica el caso (el <i>laligagate</i>), por qué es un daño
+        colateral legal y qué alternativas hay para seguir navegando.
+      </p>
+      <p class="muted">
+        Resumen: no es un fallo del servidor ni de tu conexión, y no se puede arreglar
+        desde aquí. Se levanta solo al acabar el partido.
       </p>
     </details>
     <details>
