@@ -1,17 +1,17 @@
 {
- "updated": "2026-10-31T20:12:41+00:00",
+ "updated": "2026-10-31T20:20:53+00:00",
  "services": {
   "jellyfin": {
    "name": "Jellyfin",
    "url": "https://ver.juman.ch/",
    "up": true,
    "code": 200,
-   "ms": 616,
+   "ms": 612,
    "error": null,
    "since": "2026-10-05T14:41:56+00:00",
-   "checks": 133,
+   "checks": 134,
    "uptime_pct": 100.0,
-   "avg_ms": 755,
+   "avg_ms": 754,
    "history": [
     {
      "t": "2026-10-05T14:41:56+00:00",
@@ -677,6 +677,11 @@
      "t": "2026-10-31T20:12:41+00:00",
      "u": 1,
      "ms": 616
+    },
+    {
+     "t": "2026-10-31T20:20:53+00:00",
+     "u": 1,
+     "ms": 612
     }
    ],
    "incidents": []
@@ -686,12 +691,12 @@
    "url": "https://plex.juman.ch/",
    "up": true,
    "code": 200,
-   "ms": 746,
+   "ms": 738,
    "error": null,
    "since": "2026-10-05T14:41:56+00:00",
-   "checks": 133,
+   "checks": 134,
    "uptime_pct": 100.0,
-   "avg_ms": 768,
+   "avg_ms": 767,
    "history": [
     {
      "t": "2026-10-05T14:41:56+00:00",
@@ -1357,13 +1362,18 @@
      "t": "2026-10-31T20:12:41+00:00",
      "u": 1,
      "ms": 746
+    },
+    {
+     "t": "2026-10-31T20:20:53+00:00",
+     "u": 1,
+     "ms": 738
     }
    ],
    "incidents": []
   }
  },
  "blocking": {
-  "checked_at": "2026-10-31T20:12:45+00:00",
+  "checked_at": "2026-10-31T20:20:56+00:00",
   "ok": true,
   "isps_checked": 5,
   "our_ips": [
@@ -1416,6 +1426,15 @@
    {
     "isp": "orange",
     "name": "Orange",
+    "ips": [
+     "188.114.96.2",
+     "188.114.97.2",
+     "188.114.97.5"
+    ]
+   },
+   {
+    "isp": "masmovil",
+    "name": "MasMovil / Yoigo",
     "ips": [
      "188.114.96.2",
      "188.114.97.2",
@@ -1522,6 +1541,7 @@
     "end": null,
     "isps": [
      "DIGI",
+     "MasMovil / Yoigo",
      "Movistar",
      "Orange",
      "Vodafone"
