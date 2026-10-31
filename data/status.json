@@ -1,15 +1,15 @@
 {
- "updated": "2026-10-31T22:55:34+00:00",
+ "updated": "2026-10-31T23:00:34+00:00",
  "services": {
   "jellyfin": {
    "name": "Jellyfin",
    "url": "https://ver.juman.ch/",
    "up": true,
    "code": 200,
-   "ms": 591,
+   "ms": 509,
    "error": null,
    "since": "2026-10-05T14:41:56+00:00",
-   "checks": 165,
+   "checks": 166,
    "uptime_pct": 100.0,
    "avg_ms": 728,
    "history": [
@@ -837,6 +837,11 @@
      "t": "2026-10-31T22:55:34+00:00",
      "u": 1,
      "ms": 591
+    },
+    {
+     "t": "2026-10-31T23:00:34+00:00",
+     "u": 1,
+     "ms": 509
     }
    ],
    "incidents": []
@@ -846,10 +851,10 @@
    "url": "https://plex.juman.ch/",
    "up": true,
    "code": 200,
-   "ms": 678,
+   "ms": 709,
    "error": null,
    "since": "2026-10-05T14:41:56+00:00",
-   "checks": 165,
+   "checks": 166,
    "uptime_pct": 100.0,
    "avg_ms": 766,
    "history": [
@@ -1677,13 +1682,18 @@
      "t": "2026-10-31T22:55:34+00:00",
      "u": 1,
      "ms": 678
+    },
+    {
+     "t": "2026-10-31T23:00:34+00:00",
+     "u": 1,
+     "ms": 709
     }
    ],
    "incidents": []
   }
  },
  "blocking": {
-  "checked_at": "2026-10-31T22:55:38+00:00",
+  "checked_at": "2026-10-31T23:00:37+00:00",
   "ok": true,
   "isps_checked": 5,
   "our_ips": [
@@ -1717,7 +1727,6 @@
     "isp": "movistar",
     "name": "Movistar",
     "ips": [
-     "188.114.96.2",
      "188.114.97.5"
     ]
    },
