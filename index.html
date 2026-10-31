@@ -73,12 +73,22 @@
   .inc b{color:var(--txt)}
   footer{color:var(--dim);font-size:.8rem;margin-top:28px;text-align:center;line-height:1.7}
   .skel{color:var(--dim)}
+  .refresh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-6px 0 16px}
+  .refresh button{background:transparent;color:var(--txt);border:1px solid var(--line);
+    padding:7px 13px;border-radius:8px;font:inherit;font-size:.88rem;cursor:pointer}
+  .refresh button:hover{border-color:var(--dim)}
+  .refresh button:disabled{opacity:.6;cursor:wait}
+  #recheck-msg{color:var(--dim);font-size:.82rem}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Estado de los servidores</h1>
   <div class="sub" id="updated">Cargando…</div>
+  <div class="refresh">
+    <button id="recheck" type="button">🔄 Actualizar</button>
+    <span id="recheck-msg"></span>
+  </div>
 
   <div id="banner" class="banner ok" hidden></div>
   <div id="blocking"></div>
@@ -88,7 +98,7 @@
   <div id="incidents"><p class="skel">—</p></div>
 
   <footer>
-    Se comprueba automáticamente cada 5 minutos.<br>
+    Se comprueba automáticamente cada 5 minutos y la página se actualiza sola cada minuto.<br>
     Esta página es estática: no accede a los servidores desde tu navegador.<br>
     Bloqueos por el fútbol según <a href="https://hayahora.futbol" target="_blank" rel="noopener">hayahora.futbol</a>.<br>
     ¿Qué es el <i>laligagate</i>? <a href="https://youtu.be/L26iBulYrHI" target="_blank" rel="noopener">Vídeo explicativo de Stark Privacy</a>.
@@ -114,14 +124,33 @@ function dur(sec){
   return `${sec} s`;
 }
 
-fetch('data/status.json?t='+Date.now())
-  .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-  .then(render)
-  .catch(e=>{
-    document.getElementById('cards').innerHTML =
-      '<div class="card">No se ha podido cargar el estado. Vuelve a intentarlo en unos minutos.</div>';
-    document.getElementById('updated').textContent = 'Error: '+e.message;
-  });
+let LAST = null;   // último status.json cargado
+
+function load(){
+  return fetch('data/status.json?t='+Date.now(), {cache:'no-store'})
+    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(d=>{ LAST=d; render(d); return d; })
+    .catch(e=>{
+      document.getElementById('cards').innerHTML =
+        '<div class="card">No se ha podido cargar el estado. Vuelve a intentarlo en unos minutos.</div>';
+      document.getElementById('updated').textContent = 'Error: '+e.message;
+    });
+}
+load();
+// se recarga sola cada minuto mientras la pestaña está abierta
+setInterval(()=>{ if(!document.hidden) load(); }, 60000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) load(); });
+
+async function refreshNow(){
+  const btn=document.getElementById('recheck'), msg=document.getElementById('recheck-msg');
+  btn.disabled=true; msg.textContent='Actualizando…';
+  const d = await load();
+  btn.disabled=false;
+  if(!d){ msg.textContent='No se ha podido actualizar.'; return; }
+  const hh = new Intl.DateTimeFormat('es-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(new Date());
+  msg.textContent = `Actualizado a las ${hh}. La comprobación más reciente es de hace ${ago(d.updated)}.`;
+}
+document.getElementById('recheck').addEventListener('click', refreshNow);
 
 const ALL_ISPS = ['Movistar','Vodafone','Orange','MasMovil / Yoigo','DIGI'];
 
