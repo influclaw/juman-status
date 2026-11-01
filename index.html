@@ -73,22 +73,27 @@
   .inc b{color:var(--txt)}
   footer{color:var(--dim);font-size:.8rem;margin-top:28px;text-align:center;line-height:1.7}
   .skel{color:var(--dim)}
-  .refresh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-6px 0 16px}
-  .refresh button{background:transparent;color:var(--txt);border:1px solid var(--line);
+  .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 4px}
+  .top h1{margin:0}
+  #recheck{flex-shrink:0;background:transparent;color:var(--txt);border:1px solid var(--line);
     padding:7px 13px;border-radius:8px;font:inherit;font-size:.88rem;cursor:pointer}
-  .refresh button:hover{border-color:var(--dim)}
-  .refresh button:disabled{opacity:.6;cursor:wait}
-  #recheck-msg{color:var(--dim);font-size:.82rem}
+  #recheck:hover{border-color:var(--dim)}
+  #recheck:disabled{opacity:.6;cursor:wait}
+  #recheck-msg{font-size:.82rem;opacity:.85}
+  .video{position:relative;width:100%;padding-top:56.25%;margin:10px 0 4px;border-radius:10px;overflow:hidden;background:#000}
+  .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  #more{display:block;margin:12px auto 0;background:transparent;color:var(--txt);border:1px solid var(--line);
+    padding:7px 14px;border-radius:8px;font:inherit;font-size:.86rem;cursor:pointer}
+  #more:hover{border-color:var(--dim)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Estado de los servidores</h1>
-  <div class="sub" id="updated">Cargando…</div>
-  <div class="refresh">
-    <button id="recheck" type="button">🔄 Actualizar</button>
-    <span id="recheck-msg"></span>
+  <div class="top">
+    <h1>Estado de los servidores</h1>
+    <button id="recheck" type="button" title="Cargar la última comprobación">🔄 Actualizar</button>
   </div>
+  <div class="sub"><span id="updated">Cargando…</span> <span id="recheck-msg"></span></div>
 
   <div id="banner" class="banner ok" hidden></div>
   <div id="blocking"></div>
@@ -154,9 +159,14 @@ document.getElementById('recheck').addEventListener('click', refreshNow);
 
 const ALL_ISPS = ['Movistar','Vodafone','Orange','MasMovil / Yoigo','DIGI'];
 
+let BLK_KEY = null;
 function renderBlocking(blk){
   const el = document.getElementById('blocking');
   const blocked = blk.blocked_by || [];
+  // no redibujar si no ha cambiado: cortaría el vídeo y cerraría los desplegables
+  const key = JSON.stringify([blk.checked_at ? 1 : 0, blocked.map(x=>x.name), blk.since]);
+  if(key === BLK_KEY) return;
+  BLK_KEY = key;
   if(!blk.checked_at){ el.innerHTML=''; return; }
 
   if(blocked.length === 0){
@@ -184,7 +194,9 @@ function renderBlocking(blk){
     <details>
       <summary>¿Qué puedo hacer para entrar?</summary>
       <ul>
-        <li><b>Usa los datos móviles</b> si tu móvil va con otro operador de los marcados en verde.</li>
+        ${free.length
+          ? `<li><b>Usa los datos móviles</b> si tu móvil va con ${free.length>1?'uno de los operadores':'el operador'} en verde (${free.join(', ')}).</li>`
+          : `<li><b>Ahora mismo los ${names.length} operadores principales están bloqueados</b>, así que cambiar a los datos móviles no suele ayudar: casi todas las marcas móviles usan la red de alguno de ellos.</li>`}
         <li><b>Cambia los DNS o activa una VPN</b> (por ejemplo Cloudflare WARP o Mullvad): el bloqueo
             es por IP, así que saliendo por otra red se evita.</li>
         <li><b>Espera a que acabe el partido.</b> Los bloqueos se levantan al terminar la retransmisión.</li>
@@ -221,11 +233,16 @@ function renderBlocking(blk){
         fútbol. Este servidor es uno de ellos: <b>no se bloquea por lo que hace, sino
         por el vecindario en el que vive</b>.
       </p>
+      <div class="video">
+        <iframe src="https://www.youtube-nocookie.com/embed/L26iBulYrHI" loading="lazy"
+          title="LaLiga está bloqueando Internet: así puedes evitarlo"
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      </div>
       <p>
-        <a href="https://youtu.be/L26iBulYrHI" target="_blank" rel="noopener">
-          ▶️ <b>LaLiga está bloqueando Internet: así puedes evitarlo</b></a>
-        — Stark Privacy. Explica el caso (el <i>laligagate</i>), por qué es un daño
-        colateral legal y qué alternativas hay para seguir navegando.
+        <b>LaLiga está bloqueando Internet: así puedes evitarlo</b> — Stark Privacy.
+        Explica el caso (el <i>laligagate</i>), por qué es un daño colateral legal y
+        qué alternativas hay para seguir navegando.
       </p>
       <p class="muted">
         Resumen: no es un fallo del servidor ni de tu conexión, y no se puede arreglar
@@ -300,9 +317,18 @@ function render(d){
     start:ep.start, end:ep.end, seconds:ep.seconds,
     name:'Bloqueo por fútbol', isps:ep.isps, kind:'blk'}));
   all.sort((a,b)=>new Date(b.start)-new Date(a.start));
+  ALL_INC = all;
+  renderIncidents();
+}
+
+let ALL_INC = [], SHOWN = 5;
+const PAGE = 5;
+function renderIncidents(){
+  const all = ALL_INC;
   const el=document.getElementById('incidents');
-  el.innerHTML = all.length
-    ? all.slice(0,10).map(i=> i.kind==='blk'
+  const rest = all.length - SHOWN;
+  el.innerHTML = (all.length
+    ? all.slice(0,SHOWN).map(i=> i.kind==='blk'
       ? `<div class="inc">
           <b>⚽ ${i.name}</b>${i.isps&&i.isps.length?` en ${i.isps.join(', ')}`:''} —
           desde el ${FMT.format(new Date(i.start))}
@@ -313,7 +339,10 @@ function render(d){
         ${i.end ? `, recuperado tras <b>${dur(i.seconds)}</b>` : ', <b>sigue caído</b>'}
         ${i.error?` · ${i.error}`:''}
       </div>`).join('')
-    : '<p class="skel">Sin incidencias registradas.</p>';
+    : '<p class="skel">Sin incidencias registradas.</p>')
+    + (rest > 0 ? `<button id="more" type="button">Cargar más (${rest} restante${rest>1?'s':''})</button>` : '');
+  const more = document.getElementById('more');
+  if(more) more.onclick = ()=>{ SHOWN += PAGE; renderIncidents(); };
 }
 </script>
 </body>
