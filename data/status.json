@@ -1,15 +1,15 @@
 {
- "updated": "2026-11-01T13:05:33+00:00",
+ "updated": "2026-11-01T13:10:31+00:00",
  "services": {
   "jellyfin": {
    "name": "Jellyfin",
    "url": "https://ver.juman.ch/",
    "up": true,
    "code": 200,
-   "ms": 416,
+   "ms": 578,
    "error": null,
    "since": "2026-10-05T14:41:56+00:00",
-   "checks": 336,
+   "checks": 337,
    "uptime_pct": 100.0,
    "avg_ms": 646,
    "history": [
@@ -1692,6 +1692,11 @@
      "t": "2026-11-01T13:05:33+00:00",
      "u": 1,
      "ms": 416
+    },
+    {
+     "t": "2026-11-01T13:10:31+00:00",
+     "u": 1,
+     "ms": 578
     }
    ],
    "incidents": []
@@ -1701,12 +1706,12 @@
    "url": "https://plex.juman.ch/",
    "up": true,
    "code": 200,
-   "ms": 686,
+   "ms": 601,
    "error": null,
    "since": "2026-10-05T14:41:56+00:00",
-   "checks": 336,
+   "checks": 337,
    "uptime_pct": 100.0,
-   "avg_ms": 662,
+   "avg_ms": 661,
    "history": [
     {
      "t": "2026-10-05T14:41:56+00:00",
@@ -3387,13 +3392,18 @@
      "t": "2026-11-01T13:05:33+00:00",
      "u": 1,
      "ms": 686
+    },
+    {
+     "t": "2026-11-01T13:10:31+00:00",
+     "u": 1,
+     "ms": 601
     }
    ],
    "incidents": []
   }
  },
  "blocking": {
-  "checked_at": "2026-11-01T13:05:36+00:00",
+  "checked_at": "2026-11-01T13:10:34+00:00",
   "ok": true,
   "isps_checked": 5,
   "our_ips": [
@@ -3547,9 +3557,9 @@
     "start": "2026-11-01T13:05:33+00:00",
     "end": null,
     "isps": [
+     "DIGI",
      "Movistar",
-     "Vodafone",
-     "DIGI"
+     "Vodafone"
     ]
    }
   ]
