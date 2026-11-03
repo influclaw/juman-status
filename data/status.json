@@ -1,15 +1,15 @@
 {
- "updated": "2026-11-03T08:05:12+00:00",
+ "updated": "2026-11-03T08:10:12+00:00",
  "services": {
   "jellyfin": {
    "name": "Jellyfin",
    "url": "https://ver.juman.ch/",
    "up": true,
    "code": 200,
-   "ms": 685,
+   "ms": 608,
    "error": null,
    "since": "2026-11-02T03:35:50+00:00",
-   "checks": 849,
+   "checks": 850,
    "uptime_pct": 99.18,
    "avg_ms": 681,
    "history": [
@@ -4257,6 +4257,11 @@
      "t": "2026-11-03T08:05:12+00:00",
      "u": 1,
      "ms": 685
+    },
+    {
+     "t": "2026-11-03T08:10:12+00:00",
+     "u": 1,
+     "ms": 608
     }
    ],
    "incidents": [
@@ -4273,12 +4278,12 @@
    "url": "https://plex.juman.ch/",
    "up": true,
    "code": 200,
-   "ms": 653,
+   "ms": 1000,
    "error": null,
    "since": "2026-11-02T03:35:50+00:00",
-   "checks": 849,
+   "checks": 850,
    "uptime_pct": 99.18,
-   "avg_ms": 701,
+   "avg_ms": 705,
    "history": [
     {
      "t": "2026-10-05T14:41:56+00:00",
@@ -8524,6 +8529,11 @@
      "t": "2026-11-03T08:05:12+00:00",
      "u": 1,
      "ms": 653
+    },
+    {
+     "t": "2026-11-03T08:10:12+00:00",
+     "u": 1,
+     "ms": 1000
     }
    ],
    "incidents": [
@@ -8537,7 +8547,7 @@
   }
  },
  "blocking": {
-  "checked_at": "2026-11-03T08:05:16+00:00",
+  "checked_at": "2026-11-03T08:10:16+00:00",
   "ok": true,
   "isps_checked": 5,
   "our_ips": [
@@ -8566,17 +8576,9 @@
     "188.114.97.5"
    ]
   },
-  "blocked_by": [
-   {
-    "isp": "orange",
-    "name": "Orange",
-    "ips": [
-     "188.114.96.5"
-    ]
-   }
-  ],
+  "blocked_by": [],
   "source": "https://hayahora.futbol",
-  "since": "2026-11-01T13:05:33+00:00",
+  "since": null,
   "episodes": [
    {
     "start": "2026-10-10T21:46:12+00:00",
@@ -8673,14 +8675,15 @@
    },
    {
     "start": "2026-11-01T13:05:33+00:00",
-    "end": null,
+    "end": "2026-11-03T08:10:12+00:00",
     "isps": [
      "DIGI",
      "MasMovil / Yoigo",
      "Movistar",
      "Orange",
      "Vodafone"
-    ]
+    ],
+    "seconds": 155079
    }
   ]
  }
