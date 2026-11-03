@@ -1,15 +1,15 @@
 {
- "updated": "2026-11-03T19:20:42+00:00",
+ "updated": "2026-11-03T19:25:44+00:00",
  "services": {
   "jellyfin": {
    "name": "Jellyfin",
    "url": "https://ver.juman.ch/",
    "up": true,
    "code": 200,
-   "ms": 613,
+   "ms": 735,
    "error": null,
    "since": "2026-11-02T03:35:50+00:00",
-   "checks": 983,
+   "checks": 984,
    "uptime_pct": 99.29,
    "avg_ms": 786,
    "history": [
@@ -4927,6 +4927,11 @@
      "t": "2026-11-03T19:20:42+00:00",
      "u": 1,
      "ms": 613
+    },
+    {
+     "t": "2026-11-03T19:25:44+00:00",
+     "u": 1,
+     "ms": 735
     }
    ],
    "incidents": [
@@ -4943,10 +4948,10 @@
    "url": "https://plex.juman.ch/",
    "up": true,
    "code": 200,
-   "ms": 600,
+   "ms": 710,
    "error": null,
    "since": "2026-11-02T03:35:50+00:00",
-   "checks": 983,
+   "checks": 984,
    "uptime_pct": 99.29,
    "avg_ms": 714,
    "history": [
@@ -9864,6 +9869,11 @@
      "t": "2026-11-03T19:20:42+00:00",
      "u": 1,
      "ms": 600
+    },
+    {
+     "t": "2026-11-03T19:25:44+00:00",
+     "u": 1,
+     "ms": 710
     }
    ],
    "incidents": [
@@ -9877,7 +9887,7 @@
   }
  },
  "blocking": {
-  "checked_at": "2026-11-03T19:20:44+00:00",
+  "checked_at": "2026-11-03T19:25:46+00:00",
   "ok": true,
   "isps_checked": 5,
   "our_ips": [
